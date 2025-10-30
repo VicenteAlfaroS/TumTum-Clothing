@@ -1,9 +1,8 @@
 package com.ropa.tumtumclothing.repository;
 
-import org.springframework.data.repository.CrudRepository;
-
+import org.springframework.data.jpa.repository.JpaRepository;
 import com.ropa.tumtumclothing.entities.Pedido;
 
-public interface PedidoRepository extends CrudRepository<Pedido,Long> {
+public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
 }

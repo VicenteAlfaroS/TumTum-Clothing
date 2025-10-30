@@ -1,6 +1,5 @@
 package com.ropa.tumtumclothing.services;
 
-import com.ropa.tumtumclothing.dto.PedidoDTO;
 import com.ropa.tumtumclothing.entities.Pedido;
 
 import java.util.List;
@@ -11,5 +10,4 @@ public interface PedidoService {
     Optional<Pedido> findById(Long id);
     Pedido save(Pedido unPedido);
     Optional<Pedido> delete(Pedido unPedido);
-    Pedido crearPedidoDesdeDTO(PedidoDTO pedidoDTO);
 }

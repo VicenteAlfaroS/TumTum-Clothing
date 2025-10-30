@@ -13,12 +13,8 @@ import com.ropa.tumtumclothing.entities.DetallePedido;
 import com.ropa.tumtumclothing.entities.Pedido;
 import com.ropa.tumtumclothing.entities.Producto;
 import com.ropa.tumtumclothing.repository.ProductoRepository;
-import com.ropa.tumtumclothing.services.PedidoService;
-
-import com.ropa.tumtumclothing.dto.PedidoDTO;
-import com.ropa.tumtumclothing.dto.ItemDTO;
 import com.ropa.tumtumclothing.repository.PedidoRepository;
-
+import com.ropa.tumtumclothing.services.PedidoService;
 
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
@@ -26,7 +22,7 @@ import com.ropa.tumtumclothing.repository.PedidoRepository;
 public class PedidoController {
 
     @Autowired
-    private PedidoService service;
+    private PedidoService pedidoService;
 
     @Autowired
     private PedidoRepository pedidoRepository;
@@ -34,45 +30,46 @@ public class PedidoController {
     @Autowired
     private ProductoRepository productoRepository;
 
-
     @GetMapping
     public List<Pedido> listarPedidos() {
-        return service.findByAll();
+        return pedidoService.findByAll();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> verPedido(@PathVariable Long id) {
-        return service.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<Pedido> pedido = pedidoService.findById(id);
+        if (pedido.isPresent()) {
+            return ResponseEntity.ok(pedido.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Pedido no encontrado");
+        }
     }
 
     @PostMapping
-    public ResponseEntity<?> crearPedido(@RequestBody PedidoDTO dto) {
+    public ResponseEntity<?> crearPedido(@RequestBody Pedido pedido) {
         try {
-            Pedido pedido = new Pedido();
-            pedido.setEstadoPedido(dto.getEstadoPedido());
-            pedido.setCorreoClientePedido(dto.getCorreoClientePedido());
-            pedido.setNombreClientePedido(dto.getNombreClientePedido());
-            pedido.setTotalPedido(dto.getTotalPedido());
+            if (pedido.getDetalles() == null || pedido.getDetalles().isEmpty()) {
+                return ResponseEntity.badRequest().body("El pedido debe tener al menos un producto");
+            }
 
             List<DetallePedido> detallesReconstruidos = new ArrayList<>();
 
-            for (ItemDTO item : dto.getDetalles()) {
-                if (item.getIdProducto() == null || item.getCantidadDetalle() <= 0) {
+            for (DetallePedido detalle : pedido.getDetalles()) {
+                Long idProducto = detalle.getProductoDetalle().getIdProducto();
+                if (idProducto == null || detalle.getCantidadDetalle() <= 0) {
                     return ResponseEntity.badRequest().body("Producto inválido o cantidad incorrecta");
                 }
 
-                Producto producto = productoRepository.findById(item.getIdProducto()).orElse(null);
+                Producto producto = productoRepository.findById(idProducto).orElse(null);
                 if (producto == null) {
-                    return ResponseEntity.badRequest().body("Producto no encontrado: ID " + item.getIdProducto());
+                    return ResponseEntity.badRequest().body("Producto no encontrado: ID " + idProducto);
                 }
 
-                DetallePedido detalle = new DetallePedido();
-                detalle.setProductoDetalle(producto); 
-                detalle.setPedidoDetalle(pedido);     
-                detalle.setCantidadDetalle(item.getCantidadDetalle());
-                detallesReconstruidos.add(detalle);
+                DetallePedido nuevoDetalle = new DetallePedido();
+                nuevoDetalle.setProductoDetalle(producto);
+                nuevoDetalle.setPedidoDetalle(pedido);
+                nuevoDetalle.setCantidadDetalle(detalle.getCantidadDetalle());
+                detallesReconstruidos.add(nuevoDetalle);
             }
 
             pedido.setDetalles(detallesReconstruidos);
@@ -87,7 +84,10 @@ public class PedidoController {
 
     @PutMapping("/{id}")
     public ResponseEntity<?> modificarPedido(@PathVariable Long id, @RequestBody Pedido pedidoActualizado) {
-        return service.findById(id).map(pedidoExistente -> {
+        Optional<Pedido> pedidoOptional = pedidoService.findById(id);
+
+        if (pedidoOptional.isPresent()) {
+            Pedido pedidoExistente = pedidoOptional.get();
             pedidoExistente.setCorreoClientePedido(pedidoActualizado.getCorreoClientePedido());
             pedidoExistente.setNombreClientePedido(pedidoActualizado.getNombreClientePedido());
             pedidoExistente.setEstadoPedido(pedidoActualizado.getEstadoPedido());
@@ -95,16 +95,24 @@ public class PedidoController {
             pedidoExistente.setTotalPedido(pedidoActualizado.getTotalPedido());
             pedidoExistente.setDetalles(pedidoActualizado.getDetalles());
 
-            Pedido pedidoModificado = service.save(pedidoExistente);
+            Pedido pedidoModificado = pedidoService.save(pedidoExistente);
             return ResponseEntity.ok(pedidoModificado);
-        }).orElse(ResponseEntity.notFound().build());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Pedido no encontrado");
+        }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminarPedido(@PathVariable Long id) {
         Pedido pedido = new Pedido();
         pedido.setIdPedido(id);
-        Optional<Pedido> eliminado = service.delete(pedido);
-        return eliminado.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
-    }
+        Optional<Pedido> eliminado = pedidoService.delete(pedido);
+
+        if (eliminado.isPresent()) {
+            return ResponseEntity.ok(eliminado.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Pedido no encontrado");
+        }
+    }   
+
 }
