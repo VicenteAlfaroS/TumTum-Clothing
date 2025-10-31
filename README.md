@@ -125,5 +125,5 @@ Una vez instalado todo:
 
 Para acceder al panel de administrador y probar las funcionalidades, utiliza el usuario administrador creado por el script de poblado de datos:
 
-* **Usuario:** `juan@duocuc.cl`
+* **Usuario:** `juan@duoc.cl`
 * **Contraseña:** `juan123`
