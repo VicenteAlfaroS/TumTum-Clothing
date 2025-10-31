@@ -48,3 +48,38 @@
   object-fit: contain;
   cursor: pointer;
 }
+
+.usuario-logueado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: bold;
+  color: white;
+}
+
+.usuario-logueado .saludo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1rem;
+}
+
+.usuario-logueado .icono-usuario {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.usuario-logueado .cerrar-sesion {
+  background: none;
+  border: none;
+  color: rgb(163, 163, 163);
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  font-size: 1rem;
+}
+
+.usuario-logueado .cerrar-sesion:hover {
+  text-decoration: underline;
+}

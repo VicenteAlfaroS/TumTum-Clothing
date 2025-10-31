@@ -10,15 +10,22 @@ export default function Login() {
   const [mensaje, setMensaje] = useState('');
 
   const iniciarSesion = async () => {
-    if (!email || !clave) return alert("Completa los campos");
+    if (!email || !clave) {
+      setMensaje("Completa los campos");
+      return;
+    }
 
     const dominioValido = /@duoc\.cl$|@profesor\.duoc\.cl$|@gmail\.com$/;
-    if (!dominioValido.test(email)) return alert("Correo no permitido");
+    if (!dominioValido.test(email)) {
+      setMensaje("Correo no permitido");
+      return;
+    }
 
     try {
       const res = await fetch("http://localhost:8080/tumtum/usuarios/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           correoUsuario: email,
           contraseniaUsuario: clave
@@ -33,9 +40,9 @@ export default function Login() {
         setMensaje("Error al iniciar sesión");
       } else {
         const usuario = await res.json();
-        localStorage.setItem("usuarioActivo", JSON.stringify(usuario));
-        alert(`Bienvenido ${usuario.nombreUsuario || usuario.correoUsuario}`);
+        setMensaje(`Bienvenido ${usuario.nombreUsuario || usuario.correoUsuario}`);
 
+        // Redirección según rol
         if (usuario.rolUsuario === "ADMIN" || usuario.rolUsuario === "VENDEDOR") {
           navigate("/admin");
         } else {

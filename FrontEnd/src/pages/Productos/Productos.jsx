@@ -52,8 +52,6 @@ export default function Productos() {
   return (
     <>
       <Navbar />
-
-      {/* Buscador */}
       <div className="buscador-contenedor">
         <div className="input-wrapper">
           <input
@@ -81,8 +79,6 @@ export default function Productos() {
           </div>
         )}
       </div>
-
-      {/* Herramientas de vista y orden */}
       <div className="toolbar">
         <div className="view-buttons">
           <button onClick={() => cambiarVista('grande')}>
@@ -105,8 +101,6 @@ export default function Productos() {
           </select>
         </div>
       </div>
-
-      {/* Vista de productos */}
       <section className={`productos vista-${vista}`} ref={contenedorRef}>
         {productosOrdenados.map((p) => (
           <div

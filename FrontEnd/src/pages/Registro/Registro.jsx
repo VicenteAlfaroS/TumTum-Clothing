@@ -73,7 +73,7 @@ export default function Registro() {
       }
     } catch (err) {
       console.error("Error en el registro:", err);
-      alert("❌ Error de conexión con el servidor");
+      alert("Error de conexión con el servidor");
     }
   };
 
