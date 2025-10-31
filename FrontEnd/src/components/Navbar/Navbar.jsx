@@ -4,30 +4,29 @@ import './Navbar.css';
 
 export default function Navbar() {
   const [usuario, setUsuario] = useState(null);
+  const [sesionCerrada, setSesionCerrada] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("http://localhost:8080/tumtum/usuarios/activo", {
-      method: "GET",
-      credentials: "include"
-    })
-      .then(res => res.ok ? res.json() : null)
-      .then(data => setUsuario(data))
-      .catch(() => setUsuario(null));
-  }, []);
-
-  const cerrarSesion = async () => {
-    try {
-      await fetch("http://localhost:8080/tumtum/usuarios/logout", {
-        method: "POST",
+    if (!sesionCerrada) {
+      fetch("http://localhost:8080/tumtum/usuarios/activo", {
+        method: "GET",
         credentials: "include"
-      });
-      setUsuario(null);
-      navigate("/login");
-    } catch (err) {
-      console.error("Error al cerrar sesión:", err);
-      alert("No se pudo cerrar la sesión");
+      })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data?.nombreUsuario) {
+            setUsuario(data);
+          }
+        })
+        .catch(() => setUsuario(null));
     }
+  }, [sesionCerrada]);
+
+  const cerrarSesion = () => {
+    setSesionCerrada(true); // Evita que se vuelva a cargar el usuario
+    setUsuario(null);       // Limpia el estado
+    navigate("/login");     // Redirige al login
   };
 
   return (
@@ -53,7 +52,7 @@ export default function Navbar() {
               <img src="/img/Inicio.jpg" alt="Usuario" className="icono-usuario" />
               Hola, {usuario.nombreUsuario}
             </span>
-            <button className="cerrar-sesion" onClick={cerrarSesion}>Cerrar cuenta</button>
+            <button className="cerrar-sesion" onClick={cerrarSesion}>Cerrar sesión</button>
           </div>
         ) : (
           <Link to="/login"><img src="/img/Inicio.jpg" alt="Iniciar sesión" /></Link>

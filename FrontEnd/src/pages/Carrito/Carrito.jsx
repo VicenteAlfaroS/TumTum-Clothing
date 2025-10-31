@@ -7,22 +7,17 @@ export default function Carrito() {
   const [usuario, setUsuario] = useState(null);
 
   useEffect(() => {
-    const datos = JSON.parse(localStorage.getItem('carrito')) || [];
-    setCarrito(datos);
-
-    const user = JSON.parse(localStorage.getItem('usuarioActivo'));
-    setUsuario(user);
+    fetch('http://localhost:8080/tumtum/usuarios/activo', { credentials: 'include' })
+      .then(res => res.json())
+      .then(data => setUsuario(data))
+      .catch(() => setUsuario(null));
+    setCarrito([]);
   }, []);
-
-  const actualizarCarrito = (nuevo) => {
-    setCarrito(nuevo);
-    localStorage.setItem('carrito', JSON.stringify(nuevo));
-  };
 
   const sumar = (index) => {
     const nuevo = [...carrito];
     nuevo[index].cantidad++;
-    actualizarCarrito(nuevo);
+    setCarrito(nuevo);
   };
 
   const restar = (index) => {
@@ -32,19 +27,13 @@ export default function Carrito() {
     } else {
       nuevo.splice(index, 1);
     }
-    actualizarCarrito(nuevo);
+    setCarrito(nuevo);
   };
 
   const eliminar = (index) => {
-    if (confirm(`¿Eliminar "${carrito[index].nombre}" del carrito?`)) {
-      const nuevo = [...carrito];
-      nuevo.splice(index, 1);
-      actualizarCarrito(nuevo);
-    }
-  };
-
-  const vaciarCarrito = () => {
-    actualizarCarrito([]);
+    const nuevo = [...carrito];
+    nuevo.splice(index, 1);
+    setCarrito(nuevo);
   };
 
   const finalizarCompra = async () => {
@@ -55,12 +44,14 @@ export default function Carrito() {
 
     const pedido = {
       estadoPedido: "Pendiente",
-      correoClientePedido: usuario?.correoUsuario || "Invitado",
+      correoClientePedido: usuario?.correoUsuario || "invitado@duoc.cl",
       nombreClientePedido: usuario?.nombreUsuario || "Invitado",
-      totalPedido: carrito.reduce((acc, item) => acc + item.precio * item.cantidad, 0),
+      totalPedido: carrito.reduce((acc, item) => acc + item.precioProducto * item.cantidad, 0),
       detalles: carrito.map(item => ({
-      idProducto: item.id,
-      cantidadDetalle: item.cantidad
+      cantidadDetalle: item.cantidad,
+      productoDetalle: {
+        idProducto: item.idProducto
+      }
     }))
     };
 
@@ -68,12 +59,12 @@ export default function Carrito() {
       const res = await fetch("http://localhost:8080/tumtum/pedidos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(pedido)
       });
 
       if (!res.ok) throw new Error("Error al registrar el pedido");
 
-      localStorage.removeItem("carrito");
       setCarrito([]);
       alert("Gracias por tu compra. Pedido registrado correctamente.");
     } catch (err) {
@@ -82,7 +73,7 @@ export default function Carrito() {
     }
   };
 
-  const totalGeneral = carrito.reduce((acc, item) => acc + item.precio * item.cantidad, 0);
+  const totalGeneral = carrito.reduce((acc, item) => acc + item.precioProducto * item.cantidad, 0);
 
   return (
     <>
@@ -107,17 +98,17 @@ export default function Carrito() {
                 {carrito.map((item, index) => (
                   <tr key={index}>
                     <td>
-                      <img src={item.imagen} alt={item.nombre} width="50" />
-                      <p>{item.nombre}</p>
-                      <small>Talla: {item.talla}</small>
+                      <img src={item.imgUrlProducto} alt={item.nombreProducto} width="50" />
+                      <p>{item.nombreProducto}</p>
+                      <small>Talla: {item.talla || 'Única'}</small>
                     </td>
-                    <td>${item.precio.toLocaleString("es-CL")}</td>
+                    <td>${item.precioProducto.toLocaleString("es-CL")}</td>
                     <td>
                       <button onClick={() => restar(index)}>-</button>
                       {item.cantidad}
                       <button onClick={() => sumar(index)}>+</button>
                     </td>
-                    <td>${(item.precio * item.cantidad).toLocaleString("es-CL")}</td>
+                    <td>${(item.precioProducto * item.cantidad).toLocaleString("es-CL")}</td>
                     <td>
                       <button onClick={() => eliminar(index)}>X</button>
                     </td>
@@ -128,7 +119,6 @@ export default function Carrito() {
 
             <div className="resumen">
               <p><strong>Total general:</strong> ${totalGeneral.toLocaleString("es-CL")}</p>
-              <button onClick={vaciarCarrito}>Vaciar carrito</button>
               <button onClick={finalizarCompra}>Finalizar compra</button>
             </div>
           </>

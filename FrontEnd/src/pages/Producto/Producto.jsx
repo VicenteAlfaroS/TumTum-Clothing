@@ -12,52 +12,71 @@ export default function Producto() {
       .then(res => res.json())
       .then(p => {
         const adaptado = {
-          id: p.idProducto.toString(),
-          nombre: p.nombreProducto,
-          categoria: p.categoriaProducto,
-          precio: p.precioProducto,
-          imagen: p.imgUrlProducto,
-          stock: p.stockProducto,
-          descripcion: p.descripcionProducto
+          idProducto: p.idProducto,
+          nombreProducto: p.nombreProducto,
+          categoriaProducto: p.categoriaProducto,
+          precioProducto: p.precioProducto,
+          imgUrlProducto: p.imgUrlProducto,
+          stockProducto: p.stockProducto,
+          descripcionProducto: p.descripcionProducto
         };
         setProducto(adaptado);
       })
       .catch(err => console.error('Error al cargar producto:', err));
-  }, [id]);
+
+    fetch('http://localhost:8080/tumtum/usuarios/activo', { credentials: 'include' })
+    .then(res => {
+      console.log("Usuario status:", res.status);
+      if (!res.ok) throw new Error("No autorizado");
+      return res.json();
+    })
+    .then(data => {
+      console.log("Usuario recibido:", data);
+    })
+    .catch(err => {
+      console.error("Error al cargar usuario:", err);
+    });
+}, []);
 
   if (!producto) return <p>Producto no encontrado</p>;
 
-  const agregarAlCarrito = () => {
+  const agregarAlCarrito = async () => {
     const talla = document.getElementById("talla").value;
-    let carrito = JSON.parse(localStorage.getItem("carrito")) || [];
 
-    const index = carrito.findIndex(item => item.nombre === producto.nombre && item.talla === talla);
+    const item = {
+      idProducto: producto.idProducto,
+      nombreProducto: producto.nombreProducto,
+      precioProducto: producto.precioProducto,
+      imgUrlProducto: producto.imgUrlProducto,
+      talla,
+      cantidad: 1
+    };
 
-    if (index >= 0) {
-      carrito[index].cantidad++;
-    } else {
-      carrito.push({
-        nombre: producto.nombre,
-        precio: producto.precio,
-        imagen: producto.imagen,
-        talla,
-        cantidad: 1
+    try {
+      const res = await fetch("http://localhost:8080/tumtum/carrito", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(item)
       });
-    }
 
-    localStorage.setItem("carrito", JSON.stringify(carrito));
-    alert(`${producto.nombre} (talla ${talla}) agregado al carrito`);
+      if (!res.ok) throw new Error("Error al agregar al carrito");
+      alert(`${producto.nombreProducto} (talla ${talla}) agregado al carrito`);
+    } catch (err) {
+      console.error("Error:", err);
+      alert("No se pudo agregar al carrito");
+    }
   };
 
   return (
     <>
       <Navbar />
       <main className="detalle-producto">
-        <img src={producto.imagen} alt={producto.nombre} />
+        <img src={producto.imgUrlProducto} alt={producto.nombreProducto} />
         <div className="info">
-          <h1>{producto.nombre}</h1>
-          <p className="precio">${producto.precio.toLocaleString("es-CL")}</p>
-          <p>{producto.descripcion}</p>
+          <h1>{producto.nombreProducto}</h1>
+          <p className="precio">${producto.precioProducto.toLocaleString("es-CL")}</p>
+          <p>{producto.descripcionProducto}</p>
 
           <div className="opciones">
             <label htmlFor="talla">Talla:</label>

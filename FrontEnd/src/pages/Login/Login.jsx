@@ -41,8 +41,6 @@ export default function Login() {
       } else {
         const usuario = await res.json();
         setMensaje(`Bienvenido ${usuario.nombreUsuario || usuario.correoUsuario}`);
-
-        // Redirección según rol
         if (usuario.rolUsuario === "ADMIN" || usuario.rolUsuario === "VENDEDOR") {
           navigate("/admin");
         } else {
